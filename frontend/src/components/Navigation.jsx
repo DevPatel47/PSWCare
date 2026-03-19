@@ -1,29 +1,72 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 
-import useAuth from '../hooks/useAuth';
+import useAuth from "../hooks/useAuth";
+import ClayButton from "./ui/ClayButton";
 
 function Navigation() {
   const navigate = useNavigate();
-  const { auth, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
   };
 
+  const dashboardPath = user?.role ? `/dashboard/${user.role}` : "/login";
+
   return (
-    <nav style={{ display: 'flex', gap: '12px', padding: '12px', borderBottom: '1px solid #ccc' }}>
-      <Link to="/login">Login</Link>
-      <Link to="/register">Register</Link>
-      <Link to="/dashboard/client">Client Dashboard</Link>
-      <Link to="/dashboard/psw">PSW Dashboard</Link>
-      <Link to="/dashboard/admin">Admin Dashboard</Link>
-      {isAuthenticated ? (
-        <>
-          <span>Role: {auth.role}</span>
-          <button type="button" onClick={handleLogout}>Logout</button>
-        </>
-      ) : null}
+    <nav className="clay-navbar">
+      <div className="flex items-center gap-3">
+        <Link to="/" className="text-xl font-bold text-clay-text">
+          PSWCares
+        </Link>
+        <Link
+          to="/psw-search"
+          className="text-sm font-semibold text-clay-text/80 transition-all duration-300 hover:text-clay-primary"
+        >
+          Find PSWs
+        </Link>
+        {isAuthenticated ? (
+          <Link
+            to={dashboardPath}
+            className="text-sm font-semibold text-clay-text/80 transition-all duration-300 hover:text-clay-primary"
+          >
+            Dashboard
+          </Link>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-3">
+        {isAuthenticated ? (
+          <>
+            <span className="text-sm font-semibold text-clay-text/70">
+              {user?.name} ({user?.role})
+            </span>
+            <ClayButton
+              variant="secondary"
+              className="!px-4 !py-2 text-sm"
+              onClick={handleLogout}
+            >
+              Logout
+            </ClayButton>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              className="text-sm font-semibold text-clay-text/80 transition-all duration-300 hover:text-clay-primary"
+            >
+              Login
+            </Link>
+            <Link
+              to="/register"
+              className="text-sm font-semibold text-clay-text/80 transition-all duration-300 hover:text-clay-primary"
+            >
+              Register
+            </Link>
+          </>
+        )}
+      </div>
     </nav>
   );
 }

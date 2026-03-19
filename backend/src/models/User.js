@@ -1,4 +1,7 @@
-const mongoose = require('mongoose');
+const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
+
+const { ROLES } = require("../constants");
 
 const userSchema = new mongoose.Schema(
   {
@@ -7,7 +10,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
       minlength: 2,
-      maxlength: 80
+      maxlength: 80,
     },
     email: {
       type: String,
@@ -15,28 +18,54 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Invalid email format']
+      index: true,
+      match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
     },
     password: {
       type: String,
       required: true,
       minlength: 8,
-      select: false
+      select: false,
     },
     role: {
       type: String,
-      enum: ['PSW', 'Client', 'Admin'],
+      enum: Object.values(ROLES),
       required: true,
-      default: 'Client'
+      default: ROLES.CLIENT,
     },
-    isApproved: {
+    refreshTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    refreshTokenExpiresAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    isActive: {
       type: Boolean,
-      default: false
-    }
+      default: true,
+    },
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
-module.exports = mongoose.model('User', userSchema);
+userSchema.pre("save", async function hashPassword(next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+
+  this.password = await bcrypt.hash(this.password, 12);
+  return next();
+});
+
+userSchema.methods.comparePassword = async function comparePassword(
+  candidatePassword,
+) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+module.exports = mongoose.model("User", userSchema);

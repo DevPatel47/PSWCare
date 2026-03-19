@@ -1,14 +1,44 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
-const generateToken = (payload) => {
-  const secret = process.env.JWT_SECRET;
-  const expiresIn = process.env.JWT_EXPIRES_IN || '1d';
-
-  if (!secret) {
-    throw new Error('JWT_SECRET is missing from environment variables');
-  }
-
-  return jwt.sign(payload, secret, { expiresIn });
+const generateAccessToken = ({ userId, role }) => {
+  return jwt.sign(
+    {
+      sub: userId,
+      role,
+      type: "access",
+    },
+    process.env.JWT_ACCESS_SECRET,
+    {
+      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+    },
+  );
 };
 
-module.exports = { generateToken };
+const generateRefreshToken = ({ userId, role }) => {
+  return jwt.sign(
+    {
+      sub: userId,
+      role,
+      type: "refresh",
+    },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+    },
+  );
+};
+
+const verifyAccessToken = (token) => {
+  return jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+};
+
+const verifyRefreshToken = (token) => {
+  return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+};
+
+module.exports = {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+};
